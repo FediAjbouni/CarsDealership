@@ -27,22 +27,44 @@ def get_request(endpoint, **kwargs):
     
     
 def analyze_review_sentiments(text):
-    request_url = sentiment_analyzer_url+"analyze/"+text
+    """Analyze sentiment locally without microservice"""
     try:
-        # Call get method of requests library with URL and parameters
-        response = requests.get(request_url)
-        return response.json()
-    except Exception as err:
-        print(f"Unexpected {err=}, {type(err)=}")
-        print("Network exception occurred")
+        from nltk.sentiment import SentimentIntensityAnalyzer
+        import nltk
+        
+        # Download vader_lexicon if not already present
+        try:
+            nltk.data.find('vader_lexicon')
+        except LookupError:
+            nltk.download('vader_lexicon')
+        
+        sia = SentimentIntensityAnalyzer()
+        scores = sia.polarity_scores(text)
+        
+        pos = float(scores['pos'])
+        neg = float(scores['neg'])
+        neu = float(scores['neu'])
+        
+        if neg > pos and neg > neu:
+            sentiment = "negative"
+        elif neu > neg and neu > pos:
+            sentiment = "neutral"
+        else:
+            sentiment = "positive"
+            
+        return {"sentiment": sentiment}
+    except ImportError:
+        # Fallback if nltk is not available
+        return {"sentiment": "neutral"}
 def post_review(data_dict):
     request_url = backend_url+"/insert_review"
     try :
-        response = erquests.post(request_url,json=data_dict)
+        response = requests.post(request_url,json=data_dict)
         print(response.json())
         return response.json()
-    except:
-        print("Network exeption occured")
+    except Exception as e:
+        print(f"Network exception occurred: {e}")
+        return None
         
     
     
