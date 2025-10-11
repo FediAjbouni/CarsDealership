@@ -1,11 +1,11 @@
-import React, { useState,useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import "./Dealers.css";
 import "../assets/style.css";
-import positive_icon from "../assets/positive.png"
-import neutral_icon from "../assets/neutral.png"
-import negative_icon from "../assets/negative.png"
-import review_icon from "../assets/reviewbutton.png"
+import positive_icon from "../assets/positive.png";
+import neutral_icon from "../assets/neutral.png";
+import negative_icon from "../assets/negative.png";
+import review_icon from "../assets/reviewbutton.png";
 import Header from '../Header/Header';
 
 const Dealer = () => {

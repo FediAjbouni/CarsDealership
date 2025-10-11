@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import "./Dealers.css";
 import "../assets/style.css";
@@ -47,7 +47,7 @@ const Dealers = () => {
     get_dealers();
   }, []);
 
-  let isLoggedIn = sessionStorage.getItem("username") != null ? true : false;
+  let isLoggedIn = sessionStorage.getItem("username") !== null;
   return (
     <div>
       <Header />
