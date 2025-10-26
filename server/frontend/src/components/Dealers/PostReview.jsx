@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
+import { FaArrowLeft, FaStar, FaCalendarAlt, FaCar, FaEdit } from 'react-icons/fa';
 import "./Dealers.css";
 import "../assets/style.css";
 import Header from '../Header/Header';
@@ -12,14 +13,13 @@ const PostReview = () => {
   const [date, setDate] = useState("");
   const [carmodels, setCarmodels] = useState([]);
 
-  let curr_url = window.location.href;
-  let root_url = curr_url.substring(0,curr_url.indexOf("postreview"));
+  const DJANGO_URL = "http://127.0.0.1:8000";
   let params = useParams();
   let navigate = useNavigate();
-  let id =params.id;
-  let dealer_url = root_url+`djangoapp/dealer/${id}`;
-  let review_url = root_url+`djangoapp/add_review`;
-  let carmodels_url = root_url+`djangoapp/get_cars`;
+  let id = params.id;
+  let dealer_url = `${DJANGO_URL}/djangoapp/dealer/${id}`;
+  let review_url = `${DJANGO_URL}/djangoapp/add_review`;
+  let carmodels_url = `${DJANGO_URL}/djangoapp/get_cars`;
 
   const postreview = async ()=>{
     let name = sessionStorage.getItem("firstname")+" "+sessionStorage.getItem("lastname");
@@ -89,32 +89,116 @@ const PostReview = () => {
 
 
   return (
-    <div>
+    <div className="post-review-page">
       <Header/>
-      <div  style={{margin:"5%"}}>
-      <h1 style={{color:"darkblue"}}>{dealer.full_name}</h1>
-      <textarea id='review' cols='50' rows='7' onChange={(e) => setReview(e.target.value)}></textarea>
-      <div className='input_field'>
-      Purchase Date <input type="date" onChange={(e) => setDate(e.target.value)}/>
-      </div>
-      <div className='input_field'>
-      Car Make 
-      <select name="cars" id="cars" onChange={(e) => setModel(e.target.value)}>
-      <option value="" defaultSelected disabled hidden>Choose Car Make and Model</option>
-      {carmodels.map((carmodel, index) => (
-          <option key={index} value={carmodel.CarMake+" "+carmodel.CarModel}>{carmodel.CarMake} {carmodel.CarModel}</option>
-      ))}
-      </select>        
-      </div >
-
-      <div className='input_field'>
-      Car Year <input type="int" onChange={(e) => setYear(e.target.value)} max={2023} min={2015}/>
+      
+      {/* Breadcrumb Navigation */}
+      <div className="breadcrumb-section">
+        <div className="container">
+          <Link to={`/dealer/${id}`} className="breadcrumb-link">
+            <FaArrowLeft />
+            Back to {dealer.full_name}
+          </Link>
+        </div>
       </div>
 
-      <div>
-      <button className='postreview' onClick={postreview}>Post Review</button>
+      {/* Review Form Section */}
+      <div className="review-form-section">
+        <div className="container">
+          <div className="review-form-card">
+            <div className="form-header">
+              <FaStar className="form-icon" />
+              <div>
+                <h1 className="form-title">Write a Review</h1>
+                <p className="form-subtitle">Share your experience with {dealer.full_name}</p>
+              </div>
+            </div>
+
+            <form className="review-form" onSubmit={(e) => { e.preventDefault(); postreview(); }}>
+              <div className="form-group">
+                <label htmlFor="review" className="form-label">
+                  <FaEdit className="label-icon" />
+                  Your Review
+                </label>
+                <textarea 
+                  id='review' 
+                  className="form-textarea"
+                  placeholder="Tell us about your experience with this dealer..."
+                  rows={6}
+                  onChange={(e) => setReview(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="form-row">
+                <div className="form-group">
+                  <label htmlFor="date" className="form-label">
+                    <FaCalendarAlt className="label-icon" />
+                    Purchase Date
+                  </label>
+                  <input 
+                    type="date" 
+                    id="date"
+                    className="form-input"
+                    onChange={(e) => setDate(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="year" className="form-label">
+                    <FaCar className="label-icon" />
+                    Car Year
+                  </label>
+                  <input 
+                    type="number" 
+                    id="year"
+                    className="form-input"
+                    placeholder="e.g., 2023"
+                    onChange={(e) => setYear(e.target.value)} 
+                    max={2024} 
+                    min={2015}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="form-group">
+                <label htmlFor="cars" className="form-label">
+                  <FaCar className="label-icon" />
+                  Car Make & Model
+                </label>
+                <select 
+                  name="cars" 
+                  id="cars" 
+                  className="form-select"
+                  onChange={(e) => setModel(e.target.value)}
+                  required
+                >
+                  <option value="" defaultSelected disabled hidden>
+                    Choose Car Make and Model
+                  </option>
+                  {carmodels.map((carmodel, index) => (
+                    <option key={index} value={carmodel.CarMake+" "+carmodel.CarModel}>
+                      {carmodel.CarMake} {carmodel.CarModel}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-actions">
+                <Link to={`/dealer/${id}`} className="btn btn-secondary">
+                  Cancel
+                </Link>
+                <button type="submit" className="btn btn-primary">
+                  <FaStar />
+                  Post Review
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       </div>
-    </div>
     </div>
   )
 }

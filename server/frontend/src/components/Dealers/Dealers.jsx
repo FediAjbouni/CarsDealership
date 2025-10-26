@@ -1,19 +1,21 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { FaMapMarkerAlt, FaStar, FaFilter, FaEye } from "react-icons/fa";
 import "./Dealers.css";
 import "../assets/style.css";
 import Header from "../Header/Header";
-import review_icon from "../assets/reviewicon.png";
+
 
 const Dealers = () => {
   const [dealersList, setDealersList] = useState([]);
   // let [state, setState] = useState("")
   let [states, setStates] = useState([]);
 
-  // let root_url = window.location.origin
-  let dealer_url = "/djangoapp/get_dealers";
+  // Django backend URL
+  const DJANGO_URL = "http://127.0.0.1:8000";
+  let dealer_url = `${DJANGO_URL}/djangoapp/get_dealers`;
 
-  let dealer_url_by_state = "/djangoapp/get_dealers/";
+  let dealer_url_by_state = `${DJANGO_URL}/djangoapp/get_dealers/`;
 
   const filterDealers = async (state) => {
     dealer_url_by_state = dealer_url_by_state + state;
@@ -48,59 +50,94 @@ const Dealers = () => {
   }, []);
 
   let isLoggedIn = sessionStorage.getItem("username") !== null;
+  
   return (
-    <div>
+    <div className="dealers-page">
       <Header />
-      <table className="table">
-        <tr>
-          <th>ID</th>
-          <th>Dealer Name</th>
-          <th>City</th>
-          <th>Address</th>
-          <th>Zip</th>
-          <th>
-            <select
-              name="state"
-              id="state"
-              onChange={(e) => filterDealers(e.target.value)}
-            >
-              <option value="" defaultSelected disabled hidden>
-                State
-              </option>
-              <option value="All">All States</option>
-              {states.map((state, index) => (
-                <option key={index} value={state}>{state}</option>
+      
+      {/* Hero Section */}
+      <div className="hero-section">
+        <div className="container">
+          <h1 className="hero-title">Find Your Perfect Car Dealer</h1>
+          <p className="hero-subtitle">Discover trusted dealerships in your area with verified reviews</p>
+        </div>
+      </div>
+
+      {/* Filters Section */}
+      <div className="filters-section">
+        <div className="container">
+          <div className="filters-container">
+            <div className="filter-group">
+              <FaFilter className="filter-icon" />
+              <select
+                name="state"
+                id="state"
+                className="state-filter"
+                onChange={(e) => filterDealers(e.target.value)}
+              >
+                <option value="" defaultSelected disabled hidden>
+                  Filter by State
+                </option>
+                <option value="All">All States</option>
+                {states.map((state, index) => (
+                  <option key={index} value={state}>{state}</option>
+                ))}
+              </select>
+            </div>
+            <div className="results-count">
+              {dealersList.length} dealer{dealersList.length !== 1 ? 's' : ''} found
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Dealers Grid */}
+      <div className="dealers-section">
+        <div className="container">
+          {dealersList.length === 0 ? (
+            <div className="loading-state">
+              <div className="spinner"></div>
+              <p>Loading dealers...</p>
+            </div>
+          ) : (
+            <div className="dealers-grid">
+              {dealersList.map((dealer) => (
+                <div key={dealer["id"]} className="dealer-card">
+                  <div className="dealer-card-header">
+                    <h3 className="dealer-name">
+                      <Link to={"/dealer/" + dealer["id"]} className="dealer-link">
+                        {dealer["full_name"]}
+                      </Link>
+                    </h3>
+                    <span className="dealer-id">ID: {dealer["id"]}</span>
+                  </div>
+                  
+                  <div className="dealer-location">
+                    <FaMapMarkerAlt className="location-icon" />
+                    <div className="location-details">
+                      <div className="address">{dealer["address"]}</div>
+                      <div className="city-state">{dealer["city"]}, {dealer["state"]} {dealer["zip"]}</div>
+                    </div>
+                  </div>
+
+                  <div className="dealer-actions">
+                    <Link to={"/dealer/" + dealer["id"]} className="btn btn-primary">
+                      <FaEye />
+                      View Details
+                    </Link>
+                    {isLoggedIn && (
+                      <a href={`/postreview/${dealer["id"]}`} className="btn btn-secondary">
+                        <FaStar />
+                        Write Review
+                      </a>
+                    )}
+                  </div>
+                </div>
               ))}
-            </select>
-          </th>
-          {isLoggedIn ? <th>Review Dealer</th> : <></>}
-        </tr>
-        {dealersList.map((dealer) => (
-          <tr key={dealer["id"]}>
-            <td>{dealer["id"]}</td>
-            <td>
-              <Link to={"/dealer/" + dealer["id"]}>{dealer["full_name"]}</Link>
-            </td>
-            <td>{dealer["city"]}</td>
-            <td>{dealer["address"]}</td>
-            <td>{dealer["zip"]}</td>
-            <td>{dealer["state"]}</td>
-            {isLoggedIn ? (
-              <td>
-                <a href={`/postreview/${dealer["id"]}`}>
-                  <img
-                    src={review_icon}
-                    className="review_icon"
-                    alt="Post Review"
-                  />
-                </a>
-              </td>
-            ) : (
-              <></>
-            )}
-          </tr>
-        ))}
-      </table>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

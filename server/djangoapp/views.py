@@ -47,6 +47,53 @@ def login_user(request):
     return JsonResponse(data)
 
 
+# Create a `registration` view to handle user registration
+@csrf_exempt
+def registration(request):
+    data = json.loads(request.body)
+    username = data['userName']
+    password = data['password']
+    first_name = data['firstName']
+    last_name = data['lastName']
+    email = data['email']
+    
+    # Check if user already exists
+    username_exist = False
+    email_exist = False
+    try:
+        User.objects.get(username=username)
+        username_exist = True
+    except:
+        logger.debug("{} is new user".format(username))
+    
+    try:
+        User.objects.get(email=email)
+        email_exist = True
+    except:
+        logger.debug("{} is new email".format(email))
+    
+    if not username_exist and not email_exist:
+        # Create user in Django built-in User model
+        user = User.objects.create_user(
+            username=username, 
+            password=password,
+            first_name=first_name,
+            last_name=last_name,
+            email=email
+        )
+        # Login the user and redirect to list page
+        login(request, user)
+        data = {"userName": username, "status": "Authenticated"}
+        return JsonResponse(data)
+    else:
+        error_msg = ""
+        if username_exist:
+            error_msg += "Username already exists. "
+        if email_exist:
+            error_msg += "Email already exists."
+        data = {"userName": username, "error": error_msg}
+        return JsonResponse(data)
+
 # Create a `logout_request` view to handle sign out request
 def logout_request(request):
     logout(request)
@@ -90,12 +137,27 @@ def registration(request):
 # Update the `get_dealerships` view to render the index page with
 # a list of dealerships
 def get_dealerships(request, state="All"):
-    if (state == "All"):
-        endpoint = "/fetchDealers"
-    else:
-        endpoint = "/fetchDealers/" + state
-    dealerships = get_request(endpoint)
-    return JsonResponse({"status": 200, "dealers": dealerships})
+    import os
+    import json
+    from django.conf import settings
+    
+    # Read dealerships from local JSON file
+    json_file_path = os.path.join(settings.BASE_DIR, 'database', 'data', 'dealerships.json')
+    
+    try:
+        with open(json_file_path, 'r') as file:
+            data = json.load(file)
+            dealerships = data.get('dealerships', [])
+            
+        # Filter by state if specified
+        if state != "All":
+            dealerships = [dealer for dealer in dealerships if dealer.get('state') == state]
+            
+        return JsonResponse({"status": 200, "dealers": dealerships})
+    except FileNotFoundError:
+        return JsonResponse({"status": 404, "message": "Dealerships data not found"})
+    except Exception as e:
+        return JsonResponse({"status": 500, "message": f"Error loading dealerships: {str(e)}"})
 
 
 # Create a `get_dealer_reviews` view to render the reviews of a dealer
@@ -116,10 +178,31 @@ def get_dealer_reviews(request, dealer_id):
 
 # Create a `get_dealer_details` view to render the dealer details
 def get_dealer_details(request, dealer_id):
-    if (dealer_id):
-        endpoint = "/fetchDealer/" + str(dealer_id)
-        dealership = get_request(endpoint)
-        return JsonResponse({"status": 200, "dealer": dealership})
+    if dealer_id:
+        import os
+        import json
+        from django.conf import settings
+        
+        # Read dealerships from local JSON file
+        json_file_path = os.path.join(settings.BASE_DIR, 'database', 'data', 'dealerships.json')
+        
+        try:
+            with open(json_file_path, 'r') as file:
+                data = json.load(file)
+                dealerships = data.get('dealerships', [])
+                
+            # Find the specific dealer
+            dealer = next((d for d in dealerships if d.get('id') == dealer_id), None)
+            
+            if dealer:
+                return JsonResponse({"status": 200, "dealer": dealer})
+            else:
+                return JsonResponse({"status": 404, "message": "Dealer not found"})
+                
+        except FileNotFoundError:
+            return JsonResponse({"status": 404, "message": "Dealerships data not found"})
+        except Exception as e:
+            return JsonResponse({"status": 500, "message": f"Error loading dealer details: {str(e)}"})
     else:
         return JsonResponse({"status": 400, "message": "Bad Request"})
 
